@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLORES - Version 2 (Scroll Snap)</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Fixed 3D Canvas -->
+    <div id="canvas-container"></div>
+    
+    <!-- Scroll Container -->
+    <div class="scroll-container">
+        <!-- Hero Sekcija -->
+        <section class="hero section" data-section="1">
+            <div class="hero-left">
+                <h2 class="hero-subtitle-left">Zuta Oba</h2>
+                <p class="hero-text-left">Experience the rest</p>
+                <p class="hero-description-left">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore</p>
+            </div>
+            
+            <!-- 3D Model će biti u centru -->
+            
+            <div class="hero-right">
+                <h2 class="hero-subtitle-right">Lorem ipsum dolor e</h2>
+                <p class="hero-description-right">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore</p>
+                <div class="hero-tags">
+                    <span class="tag">QUALITY</span>
+                    <span class="tag">FEELING</span>
+                    <span class="tag">AROMA</span>
+                </div>
+            </div>
+            
+            <!-- View More Button -->
+            <button class="view-more-btn" id="viewMoreBtn">View More</button>
+        </section>
+
+        <!-- Druga Sekcija -->
+        <section class="section-two section" data-section="2">
+            <div class="content-wrapper">
+                <div class="text-content">
+                    <h2>Zuta Oba - Ð savršeny flavour</h2>
+                    <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim</p>
+                    <p>Ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
+                </div>
+            </div>
+            
+            <!-- View More Button -->
+            <button class="view-more-btn" id="viewMoreBtn2">View More</button>
+        </section>
+
+        <!-- Horizontal Scroll Wrapper za sekcije 3 i 4 -->
+        <div class="horizontal-wrapper">
+            <!-- Treća Sekcija -->
+            <section class="section-three section" data-section="3">
+                <div class="section-three-content">
+                    <div class="text-left">
+                        <h1 class="section-three-title">SEKCIJA 3</h1>
+                    </div>
+                </div>
+                
+                <!-- Back to Top Button -->
+                <button class="scroll-up-btn" id="scrollUpBtn3">View More</button>
+            </section>
+
+            <!-- Četvrta Sekcija -->
+            <section class="section-four section" data-section="4">
+                <div class="section-four-content">
+                    <h1 class="section-four-title">SEKCIJA 4</h1>
+                </div>
+                <!-- Dugme za povratak na početak -->
+                <button class="scroll-up-btn" id="scrollUpBtn4">View More</button>
+            </section>
+
+            <!-- Peta Sekcija - Tab Sistem -->
+            <section class="section-five section" data-section="5">
+                <!-- Leva Polovina -->
+                <div class="section-five-left">
+                    <!-- Gornji Div - Velika Slika -->
+                    <div class="large-image-container">
+                        <img id="largeImage" src="assets/p1.jpg" alt="Slika">
+                    </div>
+
+                    <!-- Donji Div - Grid sa 15 Slika -->
+                    <div class="thumbnail-grid">
+                        <div class="thumbnail-item" data-tab="1"><span>p1</span></div>
+                        <div class="thumbnail-item" data-tab="2"><span>p2</span></div>
+                        <div class="thumbnail-item" data-tab="3"><span>p3</span></div>
+                        <div class="thumbnail-item" data-tab="4"><span>p4</span></div>
+                        <div class="thumbnail-item" data-tab="5"><span>p5</span></div>
+                        <div class="thumbnail-item" data-tab="6"><span>p6</span></div>
+                        <div class="thumbnail-item" data-tab="7"><span>p7</span></div>
+                        <div class="thumbnail-item" data-tab="8"><span>p8</span></div>
+                        <div class="thumbnail-item" data-tab="9"><span>p9</span></div>
+                        <div class="thumbnail-item" data-tab="10"><span>p10</span></div>
+                        <div class="thumbnail-item" data-tab="11"><span>p11</span></div>
+                        <div class="thumbnail-item" data-tab="12"><span>p12</span></div>
+                        <div class="thumbnail-item" data-tab="13"><span>p13</span></div>
+                        <div class="thumbnail-item" data-tab="14"><span>p14</span></div>
+                        <div class="thumbnail-item" data-tab="15"><span>p15</span></div>
+                    </div>
+                </div>
+
+                <!-- Desna Polovina - Drveni Detalji -->
+                <div class="section-five-right">
+                    <div class="wood-container">
+                        <!-- Particles Container -->
+                        <div class="particles-container">
+                            <div class="particle"></div>
+                            <div class="particle"></div>
+                            <div class="particle"></div>
+                            <div class="particle"></div>
+                            <div class="particle"></div>
+                            <div class="particle"></div>
+                            <div class="particle"></div>
+                            <div class="particle"></div>
+                        </div>
+
+                        <!-- Tekst Container -->
+                        <div class="carved-text-container">
+                            <h2 id="tabTitle" class="carved-title">TITLE</h2>
+                            <p id="tabDescription" class="carved-description">description</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Back to Top Button -->
+                <button class="scroll-up-btn" id="scrollUpBtn5">View More</button>
+            </section>
+
+            <!-- Šesta Sekcija - Stage Slajder -->
+            <section class="section-six section" data-section="6">
+                <!-- Canvas za 3D flašu -->
+                <div id="bottle-canvas-container"></div>
+
+                <!-- Stage sa flasama -->
+                <!-- <div class="stage-wrapper">
+                    <div class="stage-ellipse"></div>
+
+                    <div class="bottle-slot" data-bottle="0">
+                        <span class="slot-label">01</span>
+                    </div>
+                    <div class="bottle-slot" data-bottle="1">
+                        <span class="slot-label">02</span>
+                    </div>
+                    <div class="bottle-slot" data-bottle="2">
+                        <span class="slot-label">03</span>
+                    </div>
+                    <div class="bottle-slot" data-bottle="3">
+                        <span class="slot-label">04</span>
+                    </div>
+                    <div class="bottle-slot" data-bottle="4">
+                        <span class="slot-label">05</span>
+                    </div>
+                </div> -->
+
+                <!-- Informacije o flaši -->
+                <div class="section-six-info">
+                    <h2 class="bottle-title" id="bottleTitle">GOLDEN HONEY</h2>
+                    <p class="bottle-description" id="bottleDescription">Premium quality honey with natural sweetness</p>
+                    <div class="bottle-tags">
+                        <span class="bottle-tag" id="bottleVolume">500ml</span>
+                        <span class="bottle-tag" id="bottleType">Wildflower</span>
+                    </div>
+                    <div class="bottle-actions" id="bottleActions">
+                        <button class="bottle-action-btn" id="bottleVariantToggle" type="button" aria-pressed="false">Gold</button>
+                    </div>
+                </div>
+
+                <!-- Navigacija -->
+                <button class="stage-nav stage-nav--prev" id="prevBottle" aria-label="Previous bottle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                </button>
+                <button class="stage-nav stage-nav--next" id="nextBottle" aria-label="Next bottle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+
+                <!-- Back to Top Button -->
+                <button class="scroll-up-btn" id="scrollUpBtn6">Back to Top</button>
+            </section>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
