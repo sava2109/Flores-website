@@ -247,9 +247,11 @@ function loadBottleModels() {
                     return;
                 }
 
+                const hasTexture = !!data.texture;
+                const baseColor = hasTexture ? 0xffffff : (data.color ?? 0xffffff);
                 const bottleClone = obj.clone();
                 const material = new THREE.MeshPhongMaterial({
-                    color: data.color,
+                    color: baseColor,
                     shininess: 50,
                     specular: 0x666666,
                     transparent: true,
@@ -266,14 +268,57 @@ function loadBottleModels() {
                 bottleClone.rotation.x = -Math.PI / 2;
                 bottleClone.rotation.y = 0;
                 bottleClone.userData.stageMaterials = stageMaterials;
-                bottleClone.userData.originalColor = data.color;
-                bottleClone.userData.currentColor = data.color;
+                bottleClone.userData.originalColor = hasTexture ? null : data.color;
+                bottleClone.userData.currentColor = hasTexture ? null : data.color;
                 bottleClone.userData.isImage = false;
+                bottleClone.userData.hasTexture = hasTexture;
+                bottleClone.userData.texturePath = hasTexture ? data.texture : null;
                 bottleClone.userData.scaleMultiplier = 1;
                 bottleClone.userData.positionOffset = { x: 0, y: 0, z: 0 };
                 bottleClone.userData.rotationOverride = null;
 
-                registerBottle(index, bottleClone);
+                const registerWithScene = () => {
+                    registerBottle(index, bottleClone);
+                };
+
+                if (hasTexture) {
+                    textureLoader.load(
+                        data.texture,
+                        (texture) => {
+                            if (texture.flipY !== undefined) {
+                                texture.flipY = false;
+                            }
+                            if (THREE.sRGBEncoding !== undefined) {
+                                texture.encoding = THREE.sRGBEncoding;
+                            }
+                            if (texture.center) {
+                                texture.center.set(0.5, 0.5);
+                            }
+                            if (texture.wrapS !== undefined) {
+                                texture.wrapS = THREE.RepeatWrapping;
+                            }
+                            if (texture.repeat) {
+                                texture.repeat.x = -1;
+                            }
+                            if (texture.offset) {
+                                texture.offset.x = 1;
+                            }
+                            texture.rotation = Math.PI;
+                            texture.needsUpdate = true;
+                            material.color.set(0xffffff);
+                            material.map = texture;
+                            material.needsUpdate = true;
+                            registerWithScene();
+                        },
+                        undefined,
+                        (error) => {
+                            console.error('Error loading bottle texture:', error);
+                            registerWithScene();
+                        }
+                    );
+                } else {
+                    registerWithScene();
+                }
             });
 
             finalizeSetup();
@@ -363,7 +408,8 @@ const bottleData = [
         description: 'Acacia honey with smooth texture',
         volume: '500ml',
         type: 'Acacia',
-        color: 0xff8c00 // Narandžasta
+        color: 0xff8c00, // Narandžasta
+        texture: 'assets/nova-flasa - Copy.png'
     },
     { 
         title: 'CRYSTAL VEIL',
@@ -1291,7 +1337,10 @@ function arrangeBottleModels(activeIndex, instant = false) {
 // Postavi boju flaše na osnovu zadatog heksa
 function applyBottleColor(index, colorHex) {
     const bottle = bottleModels[index];
-    if (!bottle || (bottle.userData && bottle.userData.isImage)) return;
+    if (!bottle) return;
+
+    const userData = bottle.userData || {};
+    if (userData.isImage || userData.hasTexture) return;
 
     const materials = bottle.userData.stageMaterials || [];
     materials.forEach((mat) => {
