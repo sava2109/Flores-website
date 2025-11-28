@@ -52,7 +52,7 @@ scene.fog = new THREE.Fog(0x000000, 5, 12); // Boja, Blizina, Daljina
 
 // Promenljive za 3D modele
 let model;   // Model 1 - Wax seal (pečat) - koristi se u sekcijama 1 i 2
-let model3;  // Model 2 - Flaša (FinalBaseMesh - Copy.obj) - koristi se u sekcijama 3 i 4
+let model3;  // Model 2 - Flaša (R02-B022.glb) - koristi se u sekcijama 3 i 4
 let bottleModels = []; // Niz flaša za sekciju 6 (više boja)
 let currentBottleIndex = 0; // Trenutno prikazana flaša
 let bottleSlots = []; // Slotovi na stage-u koji predstavljaju flaše
@@ -61,8 +61,43 @@ let bottleVariantButton = null; // Dugme za Gold varijantu treće flaše
 const GOLD_BOTTLE_INDEX = 2; // Indeks flaše koja ima Gold varijantu (0-based)
 let goldVariantActive = false; // Da li je uključena Gold varijanta za ciljanu flašu
 
+// Medal interaction metadata i helper promenljive
+const medalInfo = {
+    medal_1: {
+        title: 'Terroir Medal',
+        description: 'Highlights the protected origin and its pure nectar.'
+    },
+    medal_2: {
+        title: 'Heritage Medal',
+        description: 'Celebrates decades of artisanal craftsmanship.'
+    },
+    medal_3: {
+        title: 'Reserve Medal',
+        description: 'Awarded to limited batches with exceptional balance.'
+    },
+    medal_4: {
+        title: 'Signature Medal',
+        description: 'Marks the signature blend curated for collectors.'
+    }
+};
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let medalMeshes = [];
+let currentMedalHover = null;
+
+const medalTooltip = document.createElement('div');
+medalTooltip.className = 'medal-tooltip';
+medalTooltip.style.opacity = '0';
+document.body.appendChild(medalTooltip);
+
+const tempMedalWorld = new THREE.Vector3();
+const tempBottleWorld = new THREE.Vector3();
+const tempMedalOffset = new THREE.Vector3();
+
 // OBJ Loader - alat za učitavanje .obj fajlova
 const loader = new THREE.OBJLoader();
+const gltfLoader = new THREE.GLTFLoader();
 
 // Učitavanje prvog modela (Wax Seal - pečat)
 loader.load(
@@ -113,42 +148,109 @@ loader.load(
 // LOAD MODEL 3 - Učitavanje drugog modela (flaša)
 // ============================================
 function loadModel3() {
-    const loader3 = new THREE.OBJLoader();  // Novi loader za drugi model
-    
-    loader3.load(
-        'assets/FinalBaseMesh - Copy.obj',  // Putanja do .obj fajla flaše
-        function (obj) {  // SUCCESS callback
-            model3 = obj;  // Sačuvaj model u promenljivu model3
-            
-            // Material za model 3 - isti kao za model 1 (crveni wax seal)
-            const material = new THREE.MeshPhongMaterial({
-                color: 0x444444,      // Tamno crvena boja
-                shininess: 30,        // Sjaj površine
-                specular: 0x444444    // Boja odsjaja
-            });
-            
-            // Primeni materijal na sve delove modela
+    // NOTE: Customization tips for the GLB bottle:
+    // - Section 3 defaults:
+    //   * `model3.position.set(2, -1.6, 1)` controls X (left/right), Y (up/down), Z (depth).
+    //   * `model3.rotation.set(0, baseRotationY, 0)` keeps it upright; tweak `baseRotationY` for slight yaw.
+    //   * `targetHeight` inside the bounding-box block defines the overall scale (smaller value = smaller bottle).
+    // - Section 4 zoom:
+    //   * Stored in `model3.userData.zoomScale`; change the multiplier when it’s computed if you need a different zoom amount.
+    //   * Camera move/zoom happens inside `animateToSection4()`—adjust `camera.position` or `camera.fov` there for stronger effects.
+    // - Update the `targetHeight` constant (inside the bounding box block) to globally scale the bottle.
+    console.log('Loading GLB model for sections 3 & 4...');
+    medalMeshes = [];
+
+    gltfLoader.load(
+        'assets/R02-B022.glb',
+        function (gltf) {
+            const glbRoot = gltf.scene || gltf.scenes?.[0];
+            if (!glbRoot) {
+                console.error('GLB file does not contain a scene graph.');
+                return;
+            }
+
+            const wrapper = new THREE.Group();
+            wrapper.name = 'section34_glb_wrapper';
+            wrapper.add(glbRoot);
+            model3 = wrapper;
+
+            const box = new THREE.Box3().setFromObject(glbRoot);
+            const center = new THREE.Vector3();
+            const size = new THREE.Vector3();
+            let baseScale = 0.027;
+            const targetHeight = 2; // Adjust this to scale the entire bottle (2 makes it half as tall as before)
+            if (!box.isEmpty()) {
+                box.getCenter(center);
+                box.getSize(size);
+                glbRoot.position.sub(center);
+                model3.userData.boundingSize = size;
+                console.log('GLB bounding box size:', size.toArray());
+                if (size.y && size.y > 0) {
+                    baseScale = targetHeight / size.y;
+                }
+            } else {
+                console.warn('GLB bounding box is empty; check the source file.');
+            }
+
+            const zoomMultiplier = 0.1 / 0.027; // zadrži isti odnos zoom-a kao kod OBJ verzije
+            model3.userData.baseScale = baseScale;
+            model3.userData.zoomScale = baseScale * zoomMultiplier;
+            model3.userData.baseRotationY = Math.PI / 2 + 1.4; // Rotate slightly more
+
             model3.traverse((child) => {
-                if (child instanceof THREE.Mesh) {
-                    child.material = material;
+                if (!(child instanceof THREE.Mesh)) {
+                    return;
+                }
+
+                if (child.material) {
+                    if (Array.isArray(child.material)) {
+                        child.material = child.material.map((mat) => {
+                            const clone = mat.clone ? mat.clone() : mat;
+                            clone.transparent = true;
+                            if (clone.opacity === undefined) {
+                                clone.opacity = 1;
+                            }
+                            return clone;
+                        });
+                    } else {
+                        child.material = child.material.clone ? child.material.clone() : child.material;
+                        child.material.transparent = true;
+                        if (child.material.opacity === undefined) {
+                            child.material.opacity = 1;
+                        }
+                    }
+                } else {
+                    child.material = new THREE.MeshStandardMaterial({
+                        color: 0x555555,
+                        metalness: 0.35,
+                        roughness: 0.6,
+                        transparent: true,
+                        opacity: 1
+                    });
+                }
+
+                const materials = getMeshMaterials(child);
+                if (child.name && child.name.toLowerCase().includes('medal')) {
+                    medalMeshes.push(child);
+                    child.userData.originalScale = child.scale.clone();
+                    child.userData.originalOpacity = materials.map((mat) => mat.opacity ?? 1);
                 }
             });
-            
-            // Početna pozicija objekta 2 - desna strana sekcije 3, nevidljiv na početku
-            model3.position.set(2, 0, 1);  // X: desna polovina, Y: centar, Z: dubina 1
-            model3.rotation.x = -Math.PI / 2; // Rotacija -90° po X osi da bude uspravna (flaša stoji)
-            model3.rotation.y = 0; // Bez rotacije po Y osi
-            model3.scale.set(0.05, 0.05, 0.05); // Početna veličina - UVEĆANO 2x (bilo 0.01)
-            model3.visible = false; // Sakriven dok ne dođemo do sekcije 3
-            
-            scene.add(model3);  // Dodaj model u scenu
-            console.log('Model 3 loaded successfully');  // Log u konzolu
+
+            model3.position.set(2, -1.6, 1);
+            const baseRotationY = model3.userData.baseRotationY || 0;
+            model3.rotation.set(0, baseRotationY, 0);
+            model3.scale.set(baseScale, baseScale, baseScale);
+            model3.visible = false;
+
+            scene.add(model3);
+            console.log('GLB model for sections 3 & 4 loaded and added to scene.');
         },
-        function (xhr) {  // PROGRESS callback
-            console.log('Model 3: ' + (xhr.loaded / xhr.total * 100) + '% loaded');
+        function (xhr) {
+            console.log('GLB model: ' + (xhr.loaded / xhr.total * 100) + '% loaded');
         },
-        function (error) {  // ERROR callback
-            console.error('Error loading model 3:', error);
+        function (error) {
+            console.error('Error loading GLB model:', error);
         }
     );
 }
@@ -336,31 +438,10 @@ camera.position.z = 5;
 // ============================================
 // GLOBAL VARIABLES - Globalne promenljive za kontrolu scroll-a
 // ============================================
-let currentSection = 1;      // Trenutna sekcija u kojoj se nalazimo (1, 2, 3, 4, ili 5)
+let currentSection = 1;      // Trenutna sekcija u kojoj se nalazimo (1-6)
 let isAnimating = false;     // Da li je animacija u toku (sprečava preklapanje animacija)
 let scrollAttempts = 0;      // Broj pokušaja scroll-a (za threshold)
 let lastScrollTime = 0;      // Vreme poslednjeg scroll-a (za timeout)
-
-// ============================================
-// TAB SYSTEM DATA - Podaci za svaki tab (slika)
-// ============================================
-const tabData = {
-    1: { title: 'PRODUCT 1', description: 'Premium quality honey with natural sweetness and rich flavor profile.' },
-    2: { title: 'PRODUCT 2', description: 'Organic honey harvested from wildflowers in pristine meadows.' },
-    3: { title: 'PRODUCT 3', description: 'Mountain honey with unique floral notes and smooth texture.' },
-    4: { title: 'PRODUCT 4', description: 'Forest honey with deep amber color and robust taste.' },
-    5: { title: 'PRODUCT 5', description: 'Acacia honey known for its light color and mild sweetness.' },
-    6: { title: 'PRODUCT 6', description: 'Lavender honey with delicate aroma and soothing properties.' },
-    7: { title: 'PRODUCT 7', description: 'Chestnut honey with strong flavor and dark appearance.' },
-    8: { title: 'PRODUCT 8', description: 'Clover honey with smooth taste and golden color.' },
-    9: { title: 'PRODUCT 9', description: 'Eucalyptus honey with distinctive menthol undertones.' },
-    10: { title: 'PRODUCT 10', description: 'Orange blossom honey with citrus notes and light texture.' },
-    11: { title: 'PRODUCT 11', description: 'Buckwheat honey with bold flavor and high antioxidants.' },
-    12: { title: 'PRODUCT 12', description: 'Sage honey with herbal notes and crystal clear appearance.' },
-    13: { title: 'PRODUCT 13', description: 'Linden honey with delicate sweetness and medicinal benefits.' },
-    14: { title: 'PRODUCT 14', description: 'Sunflower honey with bright yellow color and mild taste.' },
-    15: { title: 'PRODUCT 15', description: 'Thyme honey with aromatic intensity and therapeutic qualities.' }
-};
 
 // ============================================
 // BOTTLE DATA - Podaci za flaše u sekciji 6
@@ -476,8 +557,9 @@ function setupScrollSnap() {
     const viewMoreBtn2 = document.getElementById('viewMoreBtn2');  // Dugme na sekciji 2
     const scrollUpBtn3 = document.getElementById('scrollUpBtn3');  // Dugme na sekciji 3
     const scrollUpBtn4 = document.getElementById('scrollUpBtn4');  // Dugme na sekciji 4
-    const scrollUpBtn5 = document.getElementById('scrollUpBtn5');  // Dugme na sekciji 5
     const scrollUpBtn6 = document.getElementById('scrollUpBtn6');  // Dugme na sekciji 6
+    const rotateBottleLeftBtn = document.getElementById('rotateBottleLeft');
+    const rotateBottleRightBtn = document.getElementById('rotateBottleRight');
     
     // EVENT LISTENERS ZA DUGMAD - klik na dugme prelazi na sledeću sekciju
     
@@ -496,13 +578,8 @@ function setupScrollSnap() {
         scrollToSection(4, false);  // Pozovi funkciju za prelazak na sekciju 4
     });
 
-    // Dugme "Back to Top" na sekciji 4 - prelaz na sekciju 5
+    // Dugme "Back to Top" na sekciji 4 - prelaz na sekciju 6
     scrollUpBtn4.addEventListener('click', () => {
-        scrollToSection(5, false);  // Pozovi funkciju za prelazak na sekciju 5
-    });
-
-    // Dugme "Back to Top" na sekciji 5 - povratak na sekciju 1
-    scrollUpBtn5.addEventListener('click', () => {
         scrollToSection(6, false);  // Pozovi funkciju za prelazak na sekciju 6
     });
 
@@ -511,44 +588,16 @@ function setupScrollSnap() {
         scrollToSection(1, false);  // Pozovi funkciju za povratak na sekciju 1
     });
 
-    // ============================================
-    // TAB SYSTEM - Event listeners za thumbnail grid
-    // ============================================
-    const thumbnails = document.querySelectorAll('.thumbnail-item');
-    const largeImage = document.getElementById('largeImage');
-    const tabTitle = document.getElementById('tabTitle');
-    const tabDescription = document.getElementById('tabDescription');
-
-    thumbnails.forEach((thumb) => {
-        thumb.addEventListener('click', function() {
-            const tabNumber = parseInt(this.getAttribute('data-tab'));
-            
-            // Ukloni active klasu sa svih thumbnails
-            thumbnails.forEach(t => t.classList.remove('active'));
-            
-            // Dodaj active klasu na kliknut thumbnail
-            this.classList.add('active');
-            
-            // Animacija promene slike (fade out -> fade in)
-            largeImage.style.opacity = '0';
-            
-            setTimeout(() => {
-                // Promeni sliku (ako postoji)
-                largeImage.src = `assets/p${tabNumber}.jpg`;
-                
-                // Promeni tekst
-                tabTitle.textContent = tabData[tabNumber].title;
-                tabDescription.textContent = tabData[tabNumber].description;
-                
-                // Fade in
-                largeImage.style.opacity = '1';
-            }, 300);
+    if (rotateBottleLeftBtn) {
+        rotateBottleLeftBtn.addEventListener('click', () => {
+            rotateBottleBy(BUTTON_ROTATION_STEP);
         });
-    });
+    }
 
-    // Postavi prvi tab kao aktivan na početku
-    if (thumbnails.length > 0) {
-        thumbnails[0].classList.add('active');
+    if (rotateBottleRightBtn) {
+        rotateBottleRightBtn.addEventListener('click', () => {
+            rotateBottleBy(-BUTTON_ROTATION_STEP);
+        });
     }
 
     // ============================================
@@ -629,36 +678,30 @@ function setupScrollSnap() {
         if (Math.abs(wheelDelta) > 50) {
             // SCROLL DOLE (wheelDelta > 0)
             if (wheelDelta > 0 && currentSection === 1) {
-                scrollToSection(2, scrollAttempts >= WHEEL_THRESHOLD);  // Sekcija 1 → 2
-                wheelDelta = 0;  // Resetuj delta
+                scrollToSection(2, scrollAttempts >= WHEEL_THRESHOLD);
+                wheelDelta = 0;
             } else if (wheelDelta > 0 && currentSection === 2) {
-                scrollToSection(3, scrollAttempts >= WHEEL_THRESHOLD);  // Sekcija 2 → 3
+                scrollToSection(3, scrollAttempts >= WHEEL_THRESHOLD);
                 wheelDelta = 0;
             } else if (wheelDelta > 0 && currentSection === 3) {
-                scrollToSection(4, scrollAttempts >= WHEEL_THRESHOLD);  // Sekcija 3 → 4 (HORIZONTAL)
+                scrollToSection(4, scrollAttempts >= WHEEL_THRESHOLD);
                 wheelDelta = 0;
             } else if (wheelDelta > 0 && currentSection === 4) {
-                scrollToSection(5, scrollAttempts >= WHEEL_THRESHOLD);  // Sekcija 4 → 5 (HORIZONTAL)
+                scrollToSection(6, scrollAttempts >= WHEEL_THRESHOLD);
                 wheelDelta = 0;
-            } else if (wheelDelta > 0 && currentSection === 5) {
-                scrollToSection(6, scrollAttempts >= WHEEL_THRESHOLD);  // Sekcija 5 → 6 (HORIZONTAL)
-                wheelDelta = 0;
-            } 
+            }
             // SCROLL GORE (wheelDelta < 0)
             else if (wheelDelta < 0 && currentSection === 2) {
-                scrollToSection(1, scrollAttempts >= WHEEL_THRESHOLD);  // Sekcija 2 → 1
+                scrollToSection(1, scrollAttempts >= WHEEL_THRESHOLD);
                 wheelDelta = 0;
             } else if (wheelDelta < 0 && currentSection === 3) {
-                scrollToSection(2, scrollAttempts >= WHEEL_THRESHOLD);  // Sekcija 3 → 2
+                scrollToSection(2, scrollAttempts >= WHEEL_THRESHOLD);
                 wheelDelta = 0;
             } else if (wheelDelta < 0 && currentSection === 4) {
-                scrollToSection(3, scrollAttempts >= WHEEL_THRESHOLD);  // Sekcija 4 → 3 (HORIZONTAL nazad)
-                wheelDelta = 0;
-            } else if (wheelDelta < 0 && currentSection === 5) {
-                scrollToSection(4, scrollAttempts >= WHEEL_THRESHOLD);  // Sekcija 5 → 4 (HORIZONTAL nazad)
+                scrollToSection(3, scrollAttempts >= WHEEL_THRESHOLD);
                 wheelDelta = 0;
             } else if (wheelDelta < 0 && currentSection === 6) {
-                scrollToSection(5, scrollAttempts >= WHEEL_THRESHOLD);  // Sekcija 6 → 5 (HORIZONTAL nazad)
+                scrollToSection(4, scrollAttempts >= WHEEL_THRESHOLD);
                 wheelDelta = 0;
             }
         }
@@ -683,22 +726,27 @@ function scrollToSection(sectionNumber, skipAnimation = false) {
     const previousSection = currentSection;  // Zapamti prethodnu sekciju
     currentSection = sectionNumber;          // Postavi novu trenutnu sekciju
     scrollAttempts = 0;                      // Resetuj scroll pokušaje
+
+    const targetHasMedals = sectionNumber === 4;
+    if (!targetHasMedals) {
+        hideMedalTooltip();
+        resetMedalFocus(true);
+        resetBottleRotation(true);
+    }
     
     // Pronađi HTML elemente sekcija i horizontal wrapper
     const section1 = document.querySelector('[data-section="1"]');
     const section2 = document.querySelector('[data-section="2"]');
     const section3 = document.querySelector('[data-section="3"]');
     const section4 = document.querySelector('[data-section="4"]');
-    const section5 = document.querySelector('[data-section="5"]');
     const section6 = document.querySelector('[data-section="6"]');
-    const horizontalWrapper = document.querySelector('.horizontal-wrapper');  // Wrapper za sekcije 3, 4, 5 i 6
+    const horizontalWrapper = document.querySelector('.horizontal-wrapper');  // Wrapper za sekcije 3, 4 i 6
     
     // Pronađi dugmad
     const viewMoreBtn = document.getElementById('viewMoreBtn');
     const viewMoreBtn2 = document.getElementById('viewMoreBtn2');
     const scrollUpBtn3 = document.getElementById('scrollUpBtn3');
     const scrollUpBtn4 = document.getElementById('scrollUpBtn4');
-    const scrollUpBtn5 = document.getElementById('scrollUpBtn5');
     const scrollUpBtn6 = document.getElementById('scrollUpBtn6');
     
     // ============================================
@@ -801,8 +849,8 @@ function scrollToSection(sectionNumber, skipAnimation = false) {
         viewMoreBtn.classList.add('hidden');      // Sakrij dugme sekcije 1
         viewMoreBtn2.classList.add('hidden');     // Sakrij dugme sekcije 2
         scrollUpBtn3.classList.remove('visible'); // Sakrij dugme sekcije 3
-        scrollUpBtn4.classList.add('visible');    // Prikaži dugme "View More" (prelaz na sekciju 5)
-        scrollUpBtn5.classList.remove('visible'); // Sakrij dugme sekcije 5
+        scrollUpBtn4.classList.add('visible');    // Prikaži dugme za prelaz na sekciju 6
+        scrollUpBtn6.classList.remove('visible'); // Sakrij dugme sekcije 6
 
         // Prikaži/sakrij 3D modele
         if (model) model.visible = false;  // Sakrij model 1 (wax seal)
@@ -813,37 +861,6 @@ function scrollToSection(sectionNumber, skipAnimation = false) {
         animateToSection4(skipAnimation);
     
     // ============================================
-    // SEKCIJA 5 - Peta sekcija (Tab sistem, ulazi sa desne strane)
-    // ============================================
-    } else if (sectionNumber === 5) {
-        // Ako dolazimo iz sekcije 1 ili 2, prvo uradi vertikalni scroll do wrapper-a
-        if (previousSection <= 2) {
-            horizontalWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        
-        // HORIZONTAL SCROLL - pomeri wrapper levo za 200vw (dve širine ekrana)
-        if (horizontalWrapper) {
-            horizontalWrapper.style.transition = 'transform 1s ease-in-out';
-            horizontalWrapper.style.transform = 'translateX(-200vw)';  // Pomeri levo - sekcija 5 vidljiva
-        }
-
-        // Prikaži/sakrij dugmad
-        viewMoreBtn.classList.add('hidden');      // Sakrij dugme sekcije 1
-        viewMoreBtn2.classList.add('hidden');     // Sakrij dugme sekcije 2
-        scrollUpBtn3.classList.remove('visible'); // Sakrij dugme sekcije 3
-        scrollUpBtn4.classList.remove('visible'); // Sakrij dugme sekcije 4
-        scrollUpBtn5.classList.add('visible');    // Prikaži dugme "View More" (prelaz na sekciju 6)
-        scrollUpBtn6.classList.remove('visible'); // Sakrij dugme sekcije 6
-
-        // Prikaži/sakrij 3D modele - sakrij sve modele u sekciji 5
-        if (model) model.visible = false;
-        if (model3) model3.visible = false;
-    hideStageBottles();
-
-        // Pokreni animaciju za sekciju 5
-        animateToSection5(skipAnimation);
-    
-    // ============================================
     // SEKCIJA 6 - Šesta sekcija (Kružni slajder flaša)
     // ============================================
     } else if (sectionNumber === 6) {
@@ -852,10 +869,10 @@ function scrollToSection(sectionNumber, skipAnimation = false) {
             horizontalWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         
-        // HORIZONTAL SCROLL - pomeri wrapper levo za 300vw (tri širine ekrana)
+        // HORIZONTAL SCROLL - pomeri wrapper levo za 200vw (dve širine ekrana)
         if (horizontalWrapper) {
             horizontalWrapper.style.transition = 'transform 1s ease-in-out';
-            horizontalWrapper.style.transform = 'translateX(-300vw)';  // Pomeri levo - sekcija 6 vidljiva
+            horizontalWrapper.style.transform = 'translateX(-200vw)';  // Pomeri levo - sekcija 6 vidljiva
         }
 
         // Prikaži/sakrij dugmad
@@ -863,7 +880,6 @@ function scrollToSection(sectionNumber, skipAnimation = false) {
         viewMoreBtn2.classList.add('hidden');
         scrollUpBtn3.classList.remove('visible');
         scrollUpBtn4.classList.remove('visible');
-        scrollUpBtn5.classList.remove('visible');
         scrollUpBtn6.classList.add('visible');    // Prikaži dugme "Back to Top"
 
         // Prikaži/sakrij 3D modele - sakrij sve osim trenutne flaše
@@ -984,13 +1000,14 @@ function animateToSection3(instant = false) {
     
     // Trajanje animacije - brže ako je instant, sporije za normalan prelaz
     const duration = instant ? 0.3 : 1.5;
+    const baseScale = (model3.userData && model3.userData.baseScale) ? model3.userData.baseScale : 0.027;
+    const baseRotationY = (model3.userData && model3.userData.baseRotationY) ? model3.userData.baseRotationY : 0;
+    // TIP: tweak the next position/rotation/scale setters if you want a different "rest" pose when Section 3 becomes active.
     
     // Resetuj početnu poziciju i rotaciju pre animacije
     model3.position.set(2, -1.6, 1);
-    model3.rotation.x = -Math.PI / 2;
-    model3.rotation.y = 0;
-    model3.rotation.z = 0;
-    model3.scale.set(0.027, 0.027, 0.027);
+    model3.rotation.set(0, baseRotationY, 0);
+    model3.scale.set(baseScale, baseScale, baseScale);
     
     // GSAP timeline - lanac animacija
     const tl = gsap.timeline({
@@ -1017,22 +1034,22 @@ function animateToSection3(instant = false) {
     // Animiraj model3 (flaša) na desnoj strani ekrana - uspravna pozicija
     .to(model3.position, {
         x: 2,  // Pozicija X: desna polovina ekrana
-        y: -1.6,    // Pozicija Y: centar po visini
+        y: 0,    // Pozicija Y: centar po visini
         z: 1,    // Pozicija Z: dubina u sceni
         duration: duration,
         ease: instant ? "power1.out" : "power2.inOut"
     }, '<')
     .to(model3.scale, {
-        x: 0.027,  // Veličina X - srednja veličina za sekciju 3
-        y: 0.027,  // Veličina Y
-        z: 0.027,  // Veličina Z
+        x: baseScale,
+        y: baseScale,
+        z: baseScale,
         duration: duration,
         ease: instant ? "power1.out" : "power2.inOut"
     }, '<')  // '<' znači da počinje istovremeno sa prethodnom animacijom
     .to(model3.rotation, {
-        x: -Math.PI / 2, // Rotacija po X: -90° (uspravna flaša)
-        y: 0,            // Rotacija po Y: 0° (bez okretanja)
-        z: 0,            // Rotacija po Z: 0° (bez nagiba)
+        x: 0,
+        y: baseRotationY,
+        z: 0,
         duration: duration,
         ease: instant ? "power1.out" : "power2.inOut"
     }, '<');
@@ -1045,6 +1062,9 @@ function animateToSection4(instant = false) {
 
     // Trajanje animacije
     const duration = instant ? 0.4 : 1.8;
+    const baseScale = (model3.userData && model3.userData.baseScale) ? model3.userData.baseScale : 0.027;
+    const zoomScale = (model3.userData && model3.userData.zoomScale) ? model3.userData.zoomScale : baseScale * (0.1 / 0.027);
+    // TIP: change `zoomScale` or the GSAP target values below to control how close/large the bottle looks in Section 4.
 
     // GSAP timeline za animaciju
     const tl = gsap.timeline({
@@ -1057,7 +1077,7 @@ function animateToSection4(instant = false) {
     tl.to(camera.position, {
         x: 0,  // Centriraj kameru po X osi
         y: 0,  // Centriraj kameru po Y osi
-        z: 10,  // Približi kameru objektu (bilo model3.position.z + 2)
+        z: 8,  // Približi kameru objektu (bilo model3.position.z + 2)
         duration: duration/4,
         ease: "power2.inOut"
     })
@@ -1071,46 +1091,17 @@ function animateToSection4(instant = false) {
     // Animacija pozicije modela - pomeri objekat u centar ekrana
     .to(model3.position, {
         x: 0,  // Pomeri objekat u centar ekrana (levo-desno)
-        y: -7,  // Zadrži Y poziciju
+        y: -1,  // Zadrži Y poziciju
         z: 1,  // Zadrži Z poziciju
         duration: duration/4,
         ease: "power2.inOut"
     }, '<')
     // Animacija veličine modela - uvećaj objekat
     .to(model3.scale, {
-        x: 0.1,  // Uvećaj objekat
-        y: 0.1,
-        z: 0.1,
+        x: zoomScale,  // Uvećaj objekat
+        y: zoomScale,
+        z: zoomScale,
         duration: duration/4,
-        ease: "power2.inOut"
-    }, '<');
-}
-
-// Animacija ka petoj sekciji - bez 3D modela, čista sekcija
-function animateToSection5(instant = false) {
-    isAnimating = true;
-    
-    const duration = instant ? 0.3 : 1.5;
-    
-    // Timeline za kameru (vrati u početno stanje ako je potrebno)
-    const tl = gsap.timeline({
-        onComplete: () => {
-            isAnimating = false;
-        }
-    });
-    
-    // Vrati kameru u normalno stanje
-    tl.to(camera.position, {
-        x: 0,
-        y: 0,
-        z: 5,
-        duration: duration,
-        ease: "power2.inOut"
-    })
-    .to(camera, {
-        fov: 45,
-        onUpdate: () => camera.updateProjectionMatrix(),
-        duration: duration,
         ease: "power2.inOut"
     }, '<');
 }
@@ -1130,7 +1121,7 @@ function animateToSection6(instant = false) {
     // Vrati kameru u normalno stanje
     tl.to(camera.position, {
         x: 0,
-        y: 2,
+        y: 0,
         z: 8,
         duration: duration,
         ease: "power2.inOut"
@@ -1450,6 +1441,193 @@ function updateBottleUI(index) {
 }
 
 // ============================================
+// MEDAL INTERACTION HELPERS - GLB hover logika
+// ============================================
+function getMeshMaterials(mesh) {
+    if (!mesh) return [];
+    if (Array.isArray(mesh.material)) {
+        return mesh.material.filter(Boolean);
+    }
+    return mesh.material ? [mesh.material] : [];
+}
+
+function tweenMeshOpacity(mesh, value, duration = 0.3, options = {}) {
+    const materials = getMeshMaterials(mesh);
+    const base = mesh.userData.originalOpacity || [];
+    const useOriginal = options.useOriginal ?? false;
+
+    materials.forEach((mat, index) => {
+        if (!mat) return;
+        const targetValue = useOriginal ? (base[index] ?? 1) : value;
+        if (targetValue === undefined || targetValue === null) return;
+
+        gsap.to(mat, {
+            opacity: targetValue,
+            duration,
+            ease: 'power2.out',
+            onUpdate: () => {
+                mat.needsUpdate = true;
+            }
+        });
+    });
+}
+
+function setMeshOpacityInstant(mesh, options = {}) {
+    const materials = getMeshMaterials(mesh);
+    const base = mesh.userData.originalOpacity || [];
+    const useOriginal = options.useOriginal ?? false;
+    const value = options.value ?? 1;
+
+    materials.forEach((mat, index) => {
+        if (!mat) return;
+        mat.opacity = useOriginal ? (base[index] ?? 1) : value;
+        mat.needsUpdate = true;
+    });
+}
+
+function handlePointerMove(event) {
+    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    evaluateMedalHover(event);
+}
+
+function evaluateMedalHover(event) {
+    const medalSectionActive = currentSection === 4;
+    if (!model3 || !medalMeshes.length || !medalSectionActive) {
+        if (currentMedalHover) {
+            resetMedalFocus();
+            hideMedalTooltip();
+        }
+        return;
+    }
+
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects(medalMeshes, true);
+
+    if (intersects.length > 0) {
+        const hovered = intersects[0].object;
+        if (currentMedalHover !== hovered) {
+            applyMedalFocus(hovered);
+        }
+        if (event) {
+            showMedalTooltip(hovered, event.clientX, event.clientY);
+        }
+    } else if (currentMedalHover) {
+        resetMedalFocus();
+        hideMedalTooltip();
+    }
+}
+
+function applyMedalFocus(target) {
+    currentMedalHover = target;
+    medalMeshes.forEach((mesh) => {
+        const baseScale = mesh.userData.originalScale || mesh.scale.clone();
+        const multiplier = mesh === target ? 1 : 1;
+        const goalScale = baseScale.clone().multiplyScalar(multiplier);
+
+        gsap.to(mesh.scale, {
+            x: goalScale.x,
+            y: goalScale.y,
+            z: baseScale.z, // Don't scale Z
+            duration: 0.35,
+            ease: 'power2.out'
+        });
+
+        if (mesh === target) {
+            tweenMeshOpacity(mesh, 1, 0.3, { useOriginal: true });
+        } else {
+            tweenMeshOpacity(mesh, 0.25, 0.3);
+        }
+    });
+
+}
+
+function resetMedalFocus(instant = false) {
+    if (!medalMeshes.length) {
+        currentMedalHover = null;
+        return;
+    }
+
+    medalMeshes.forEach((mesh) => {
+        const baseScale = mesh.userData.originalScale || new THREE.Vector3(1, 1, 1);
+        if (instant) {
+            mesh.scale.copy(baseScale);
+            setMeshOpacityInstant(mesh, { useOriginal: true });
+        } else {
+            gsap.to(mesh.scale, {
+                x: baseScale.x,
+                y: baseScale.y,
+                z: baseScale.z,
+                duration: 0.35,
+                ease: 'power2.out'
+            });
+            tweenMeshOpacity(mesh, 1, 0.3, { useOriginal: true });
+        }
+    });
+
+    currentMedalHover = null;
+}
+
+const BUTTON_ROTATION_STEP = THREE.MathUtils.degToRad(12);
+
+function rotateBottleBy(delta) {
+    if (!model3) {
+        return;
+    }
+
+    const targetRotationY = model3.rotation.y + delta;
+    gsap.to(model3.rotation, {
+        y: targetRotationY,
+        duration: 0.6,
+        ease: 'power2.inOut'
+    });
+}
+
+function resetBottleRotation(instant = false) {
+    if (!model3) return;
+    const baseRotationY = (model3.userData && model3.userData.baseRotationY) ? model3.userData.baseRotationY : 0;
+
+    if (instant) {
+        model3.rotation.y = baseRotationY;
+        return;
+    }
+
+    gsap.to(model3.rotation, {
+        y: baseRotationY,
+        duration: 0.5,
+        ease: 'power2.inOut'
+    });
+}
+
+function showMedalTooltip(mesh, clientX, clientY) {
+    if (!medalTooltip || currentSection !== 4) return;
+
+    const key = mesh.name ? mesh.name.toLowerCase() : 'medal';
+    const info = medalInfo[key] || {
+        title: mesh.name || 'Medal',
+        description: 'Signature detail crafted for this edition.'
+    };
+
+    medalTooltip.innerHTML = `
+        <div class="medal-tooltip__layout">
+            <div class="medal-tooltip__name">${info.title}</div>
+            <div class="medal-tooltip__box"></div>
+            <div class="medal-tooltip__desc">${info.description}</div>
+            <span class="medal-tooltip__line medal-tooltip__line--name"></span>
+            <span class="medal-tooltip__line medal-tooltip__line--desc"></span>
+        </div>
+    `;
+    medalTooltip.style.left = `${clientX}px`;
+    medalTooltip.style.top = `${clientY}px`;
+    medalTooltip.style.opacity = '1';
+}
+
+function hideMedalTooltip() {
+    if (!medalTooltip) return;
+    medalTooltip.style.opacity = '0';
+}
+
+// ============================================
 // ANIMATION LOOP - Glavna petlja za renderovanje i lebdenje efekat
 // ============================================
 let time = 0;  // Promenljiva za vreme - raste svaki frame (za lebdenje efekat)
@@ -1492,6 +1670,12 @@ window.addEventListener('resize', () => {
     
     // Ažuriraj veličinu renderera na novu veličinu prozora
     renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+window.addEventListener('pointermove', handlePointerMove, { passive: true });
+window.addEventListener('pointerleave', () => {
+    resetMedalFocus();
+    hideMedalTooltip();
 });
 
 // ============================================
@@ -1548,7 +1732,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const viewMoreBtn2 = document.getElementById('viewMoreBtn2');
     const scrollUpBtn3 = document.getElementById('scrollUpBtn3');
     const scrollUpBtn4 = document.getElementById('scrollUpBtn4');
-    const scrollUpBtn5 = document.getElementById('scrollUpBtn5');
     const scrollUpBtn6 = document.getElementById('scrollUpBtn6');
     
     // Prikaži dugme na sekciji 1, sakrij ostala
@@ -1556,7 +1739,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (viewMoreBtn2) viewMoreBtn2.classList.add('hidden');
     if (scrollUpBtn3) scrollUpBtn3.classList.remove('visible');
     if (scrollUpBtn4) scrollUpBtn4.classList.remove('visible');
-    if (scrollUpBtn5) scrollUpBtn5.classList.remove('visible');
     if (scrollUpBtn6) scrollUpBtn6.classList.remove('visible');
     
     // Resetuj model 1 u početnu poziciju

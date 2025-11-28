@@ -50,7 +50,7 @@
             <button class="view-more-btn" id="viewMoreBtn2">View More</button>
         </section>
 
-        <!-- Horizontal Scroll Wrapper za sekcije 3 i 4 -->
+        <!-- Horizontal Scroll Wrapper za sekcije 3, 4 i 6 -->
         <div class="horizontal-wrapper">
             <!-- Treća Sekcija -->
             <section class="section-three section" data-section="3">
@@ -68,65 +68,17 @@
             <section class="section-four section" data-section="4">
                 <div class="section-four-content">
                     <h1 class="section-four-title">SEKCIJA 4</h1>
+                    <div class="section-four-rotator">
+                        <button class="bottle-rotate-btn" id="rotateBottleLeft" type="button" aria-label="Rotate bottle left">
+                            <span>&larr;</span>
+                        </button>
+                        <button class="bottle-rotate-btn" id="rotateBottleRight" type="button" aria-label="Rotate bottle right">
+                            <span>&rarr;</span>
+                        </button>
+                    </div>
                 </div>
                 <!-- Dugme za povratak na početak -->
                 <button class="scroll-up-btn" id="scrollUpBtn4">View More</button>
-            </section>
-
-            <!-- Peta Sekcija - Tab Sistem -->
-            <section class="section-five section" data-section="5">
-                <!-- Leva Polovina -->
-                <div class="section-five-left">
-                    <!-- Gornji Div - Velika Slika -->
-                    <div class="large-image-container">
-                        <img id="largeImage" src="assets/p1.jpg" alt="Slika">
-                    </div>
-
-                    <!-- Donji Div - Grid sa 15 Slika -->
-                    <div class="thumbnail-grid">
-                        <div class="thumbnail-item" data-tab="1"><span>p1</span></div>
-                        <div class="thumbnail-item" data-tab="2"><span>p2</span></div>
-                        <div class="thumbnail-item" data-tab="3"><span>p3</span></div>
-                        <div class="thumbnail-item" data-tab="4"><span>p4</span></div>
-                        <div class="thumbnail-item" data-tab="5"><span>p5</span></div>
-                        <div class="thumbnail-item" data-tab="6"><span>p6</span></div>
-                        <div class="thumbnail-item" data-tab="7"><span>p7</span></div>
-                        <div class="thumbnail-item" data-tab="8"><span>p8</span></div>
-                        <div class="thumbnail-item" data-tab="9"><span>p9</span></div>
-                        <div class="thumbnail-item" data-tab="10"><span>p10</span></div>
-                        <div class="thumbnail-item" data-tab="11"><span>p11</span></div>
-                        <div class="thumbnail-item" data-tab="12"><span>p12</span></div>
-                        <div class="thumbnail-item" data-tab="13"><span>p13</span></div>
-                        <div class="thumbnail-item" data-tab="14"><span>p14</span></div>
-                        <div class="thumbnail-item" data-tab="15"><span>p15</span></div>
-                    </div>
-                </div>
-
-                <!-- Desna Polovina - Drveni Detalji -->
-                <div class="section-five-right">
-                    <div class="wood-container">
-                        <!-- Particles Container -->
-                        <div class="particles-container">
-                            <div class="particle"></div>
-                            <div class="particle"></div>
-                            <div class="particle"></div>
-                            <div class="particle"></div>
-                            <div class="particle"></div>
-                            <div class="particle"></div>
-                            <div class="particle"></div>
-                            <div class="particle"></div>
-                        </div>
-
-                        <!-- Tekst Container -->
-                        <div class="carved-text-container">
-                            <h2 id="tabTitle" class="carved-title">TITLE</h2>
-                            <p id="tabDescription" class="carved-description">description</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Back to Top Button -->
-                <button class="scroll-up-btn" id="scrollUpBtn5">View More</button>
             </section>
 
             <!-- Šesta Sekcija - Stage Slajder -->
@@ -189,6 +141,7 @@
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="js/main.js"></script>
 </body>

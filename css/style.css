@@ -40,10 +40,95 @@ body {
     min-height: 100vh;
 }
 
-/* Horizontal Wrapper za sekcije 3, 4, 5 i 6 */
+/* Medal tooltip for GLB hover details */
+.medal-tooltip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: rgba(7, 7, 7, 0.92);
+    color: #f5f0e6;
+    padding: 22px 28px;
+    border-radius: 18px;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    font-family: 'Georgia', serif;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform: translate(-50%, -140%);
+    z-index: 999;
+    white-space: normal;
+    width: 260px;
+    min-height: 220px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65);
+}
+
+.medal-tooltip__layout {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 180px;
+}
+
+.medal-tooltip__box {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border: 2px solid rgba(245, 215, 160, 0.75);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(245, 215, 160, 0.05);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.medal-tooltip__name {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #fdf6df;
+}
+
+.medal-tooltip__desc {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 12px;
+    color: #f8f1d2;
+    opacity: 0.9;
+    text-align: right;
+    max-width: 70%;
+}
+
+.medal-tooltip__line {
+    position: absolute;
+    width: 2px;
+    background: linear-gradient(180deg, rgba(255, 238, 180, 0.95), rgba(115, 82, 18, 0.8));
+}
+
+.medal-tooltip__line--name {
+    height: 90px;
+    top: 35px;
+    left: 65px;
+    transform-origin: top;
+    transform: rotate(-35deg);
+}
+
+.medal-tooltip__line--desc {
+    height: 90px;
+    bottom: 35px;
+    right: 65px;
+    transform-origin: bottom;
+    transform: rotate(35deg);
+}
+
+/* Horizontal Wrapper za sekcije 3, 4 i 6 */
 .horizontal-wrapper {
     display: flex;
-    width: 400vw; /* Četiri sekcije po 100vw */
+    width: 300vw; /* Tri sekcije po 100vw (3, 4, 6) */
     height: 100vh;
     overflow-x: hidden;
     position: relative;
@@ -284,6 +369,7 @@ body {
     align-items: center;
     justify-content: center;
     padding: 0 8%;
+    position: relative;
 }
 
 .section-four-content {
@@ -303,6 +389,44 @@ body {
     transform: translateY(100vh);
     z-index: 2;
     pointer-events: none;
+}
+
+.section-four-rotator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 1200px;
+    display: flex;
+    justify-content: center;
+    gap: 800px;
+    pointer-events: none;
+}
+
+.bottle-rotate-btn {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 2px solid rgba(240, 193, 75, 0.75);
+    background: radial-gradient(circle at 30% 30%, rgba(245, 214, 125, 0.85), rgba(22, 17, 10, 0.85));
+    color: #fdf6df;
+    font-size: 30px;
+    font-family: 'Georgia', serif;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.55), inset 0 0 12px rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(6px);
+    pointer-events: auto;
+}
+
+.bottle-rotate-btn:hover,
+.bottle-rotate-btn:focus-visible {
+    transform: scale(1.12);
+    border-color: #ffe9a0;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 238, 180, 0.95), rgba(32, 25, 16, 0.95));
+    box-shadow: 0 18px 30px rgba(0, 0, 0, 0.65), inset 0 0 16px rgba(255, 255, 255, 0.3);
+    outline: none;
 }
 
 /* Peta Sekcija - Tab Sistem */
