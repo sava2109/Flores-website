@@ -3,112 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FLORES - Version 2 (Scroll Snap)</title>
+    <title>ŽUTA OSA | Premium Pića</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Animated Background Particles -->
+    <div class="bg-particles" id="bgParticles"></div>
+
+    <!-- Fixed Navigation Menu -->
+    <nav class="nav-menu" id="navMenu">
+        <div class="nav-logo">ŽUTA OSA</div>
+        <ul class="nav-links">
+            <li><a href="#hero" class="nav-link active" data-section="1">Početna</a></li>
+            <li><a href="#about" class="nav-link" data-section="2">O nama</a></li>
+            <li><a href="#flagship" class="nav-link" data-section="3">Premium</a></li>
+            <li><a href="#awards" class="nav-link" data-section="4">Nagrade</a></li>
+            <li><a href="#products" class="nav-link" data-section="6">Proizvodi</a></li>
+        </ul>
+        <div class="nav-cta">
+            <span class="nav-contact">Kontakt</span>
+        </div>
+    </nav>
+
     <!-- Fixed 3D Canvas -->
     <div id="canvas-container"></div>
     
     <!-- Scroll Container -->
     <div class="scroll-container">
         <!-- Hero Sekcija -->
-        <section class="hero section" data-section="1">
-            <div class="hero-left">
-                <h2 class="hero-subtitle-left">Zuta Oba</h2>
-                <p class="hero-text-left">Experience the rest</p>
-                <p class="hero-description-left">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore</p>
-            </div>
-            
-            <!-- 3D Model će biti u centru -->
-            
-            <div class="hero-right">
-                <h2 class="hero-subtitle-right">Lorem ipsum dolor e</h2>
-                <p class="hero-description-right">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore</p>
-                <div class="hero-tags">
-                    <span class="tag">QUALITY</span>
-                    <span class="tag">FEELING</span>
-                    <span class="tag">AROMA</span>
+        <section class="hero section" data-section="1" id="hero">
+            <div class="hero-content">
+                <div class="hero-left">
+                    <span class="hero-badge">Est. 1987</span>
+                    <h1 class="hero-title">Žuta Osa</h1>
+                    <p class="hero-tagline">Savršenstvo u svakoj kapi</p>
+                </div>
+                
+                <!-- 3D Model će biti u centru -->
+                
+                <div class="hero-right">
+                    <p class="hero-description">Premium rakija, tradicionalno proizvedena od najfinijeg voća sa sunčanih padina Srbije.</p>
+                    <div class="hero-tags">
+                        <span class="tag">Tradicija</span>
+                        <span class="tag">Kvalitet</span>
+                        <span class="tag">Aroma</span>
+                    </div>
                 </div>
             </div>
             
-            <!-- View More Button -->
-            <button class="view-more-btn" id="viewMoreBtn">View More</button>
+            <!-- Scroll Indicator -->
+            <div class="scroll-indicator" id="viewMoreBtn">
+                <span class="scroll-text">Istraži</span>
+                <div class="scroll-line"></div>
+            </div>
         </section>
 
-        <!-- Druga Sekcija -->
-        <section class="section-two section" data-section="2">
+        <!-- Druga Sekcija - O Nama -->
+        <section class="section-two section" data-section="2" id="about">
             <div class="content-wrapper">
                 <div class="text-content">
-                    <h2>Zuta Oba - Ð savršeny flavour</h2>
-                    <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim</p>
-                    <p>Ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
+                    <span class="section-label">O nama</span>
+                    <h2>Tradicija od <em>1987.</em></h2>
+                    <p class="lead">Više od tri decenije posvećeni smo umetnosti destilacije, spajajući vekovno nasleđe sa modernim standardima kvaliteta.</p>
+                    <p>Svaka flaša Žute Ose priča priču o strpljenju, veštini i posvećenosti. Od pažljivo odabranog voća do finalnog proizvoda — svaki korak je ritual savršenstva.</p>
                 </div>
             </div>
             
-            <!-- View More Button -->
-            <button class="view-more-btn" id="viewMoreBtn2">View More</button>
+            <!-- Scroll Indicator -->
+            <div class="scroll-indicator" id="viewMoreBtn2">
+                <span class="scroll-text">Dalje</span>
+                <div class="scroll-line"></div>
+            </div>
         </section>
 
         <!-- Horizontal Scroll Wrapper za sekcije 3, 4 i 6 -->
         <div class="horizontal-wrapper">
-            <!-- Treća Sekcija -->
-            <section class="section-three section" data-section="3">
+            <!-- Treća Sekcija - Flagship Product -->
+            <section class="section-three section" data-section="3" id="flagship">
                 <div class="section-three-content">
                     <div class="text-left">
-                        <h1 class="section-three-title">SEKCIJA 3</h1>
+                        <span class="section-label">Naš Best-Seller</span>
+                        <h1 class="section-three-title">Premium<br/>Reserve</h1>
+                        <p class="section-three-desc">Ekskluzivna edicija, limitirana serija od samo 500 flaša godišnje. Odležana minimum 8 godina u hrastovim buradima.</p>
                     </div>
                 </div>
                 
-                <!-- Back to Top Button -->
-                <button class="scroll-up-btn" id="scrollUpBtn3">View More</button>
+                <!-- Scroll Indicator -->
+                <div class="scroll-indicator" id="scrollUpBtn3">
+                    <span class="scroll-text">Nagrade</span>
+                    <div class="scroll-line scroll-line-horizontal"></div>
+                </div>
             </section>
 
-            <!-- Četvrta Sekcija -->
-            <section class="section-four section" data-section="4">
+            <!-- Četvrta Sekcija - Awards -->
+            <section class="section-four section" data-section="4" id="awards">
                 <div class="section-four-content">
-                    <h1 class="section-four-title">SEKCIJA 4</h1>
+                    <span class="section-label">Priznanja</span>
+                    <h1 class="section-four-title">Nagrađivani<br/>Kvalitet</h1>
+                    <p class="section-four-desc">Pređi kursorom preko medalja da saznaš više o našim međunarodnim nagradama.</p>
                     <div class="section-four-rotator">
                         <button class="bottle-rotate-btn" id="rotateBottleLeft" type="button" aria-label="Rotate bottle left">
-                            <span>&larr;</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 18l-6-6 6-6"/>
+                            </svg>
                         </button>
                         <button class="bottle-rotate-btn" id="rotateBottleRight" type="button" aria-label="Rotate bottle right">
-                            <span>&rarr;</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 18l6-6-6-6"/>
+                            </svg>
                         </button>
                     </div>
                 </div>
-                <!-- Dugme za povratak na početak -->
-                <button class="scroll-up-btn" id="scrollUpBtn4">View More</button>
+                <!-- Scroll Indicator -->
+                <div class="scroll-indicator" id="scrollUpBtn4">
+                    <span class="scroll-text">Proizvodi</span>
+                    <div class="scroll-line scroll-line-horizontal"></div>
+                </div>
             </section>
 
-            <!-- Šesta Sekcija - Stage Slajder -->
-            <section class="section-six section" data-section="6">
+            <!-- Šesta Sekcija - Product Gallery -->
+            <section class="section-six section" data-section="6" id="products">
                 <!-- Canvas za 3D flašu -->
                 <div id="bottle-canvas-container"></div>
 
-                <!-- Stage sa flasama -->
-                <!-- <div class="stage-wrapper">
-                    <div class="stage-ellipse"></div>
-
-                    <div class="bottle-slot" data-bottle="0">
-                        <span class="slot-label">01</span>
-                    </div>
-                    <div class="bottle-slot" data-bottle="1">
-                        <span class="slot-label">02</span>
-                    </div>
-                    <div class="bottle-slot" data-bottle="2">
-                        <span class="slot-label">03</span>
-                    </div>
-                    <div class="bottle-slot" data-bottle="3">
-                        <span class="slot-label">04</span>
-                    </div>
-                    <div class="bottle-slot" data-bottle="4">
-                        <span class="slot-label">05</span>
-                    </div>
-                </div> -->
-
                 <!-- Informacije o flaši -->
                 <div class="section-six-info">
+                    <span class="product-number" id="productNumber">01 / 05</span>
                     <h2 class="bottle-title" id="bottleTitle">GOLDEN HONEY</h2>
                     <p class="bottle-description" id="bottleDescription">Premium quality honey with natural sweetness</p>
                     <div class="bottle-tags">
@@ -132,8 +155,20 @@
                     </svg>
                 </button>
 
+                <!-- Progress Dots -->
+                <div class="product-dots" id="productDots">
+                    <span class="dot active"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+
                 <!-- Back to Top Button -->
-                <button class="scroll-up-btn" id="scrollUpBtn6">Back to Top</button>
+                <div class="scroll-indicator scroll-indicator-up" id="scrollUpBtn6">
+                    <div class="scroll-line scroll-line-up"></div>
+                    <span class="scroll-text">Početak</span>
+                </div>
             </section>
         </div>
     </div>
